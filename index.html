@@ -806,8 +806,9 @@ input[type="range"]::-moz-range-thumb {
     var e = Math.floor(Math.log10(n));
     var c = Math.round((n / Math.pow(10, e)) * 10) / 10;
     if (c >= 10) { e += 1; c = 1; }
-    if (Math.abs(c - 1) < 0.06) return '10' + sup(e);
-    return String(c) + '\u202F\u00D7\u202F10' + sup(e);
+    /* Always show the mantissa so significant digits are never dropped
+       (e.g. 1.1 x 10^4 rather than a bare 10^4). */
+    return c.toFixed(1) + '\u202F\u00D7\u202F10' + sup(e);
   }
 
   function fmtReadsHuman(n) {
