@@ -708,6 +708,11 @@ input[type="range"]::-moz-range-thumb {
               <option value="0.026">Yeast diploid (S. cerevisiae) &mdash; 0.026 pg</option>
             </select>
           </div>
+          <div class="ck-inline" style="margin-top:4px">
+            <span class="ck-inline-label">gDNA / rxn</span>
+            <input type="range" id="r-gdna" min="50" max="1500" step="25" value="1500">
+            <input type="text" class="ck-badge" id="b-gdna" value="1.5 &micro;g">
+          </div>
           <div class="ck-detail" id="ck-gdna-line" style="margin-top:5px">&mdash;</div>
           <div id="ck-rxn-warn" class="ck-unit" style="margin-top:2px"></div>
         </div>
@@ -1086,10 +1091,16 @@ input[type="range"]::-moz-range-thumb {
       var gdnaDisp = totalGdnaNg >= 1000
         ? (Math.round(totalGdnaNg / 100) / 10).toFixed(1) + ' µg'
         : Math.round(totalGdnaNg) + ' ng';
-      var rxnsNeeded = Math.ceil(totalGdnaNg / 100); /* 100 ng/rxn standard */
+      var gdnaPerRxn = Math.max(50, Math.min(1500,
+        parseFloat(document.getElementById('r-gdna').value) || 1500));
+      var rxnsNeeded = Math.ceil(totalGdnaNg / gdnaPerRxn);
+      var perRxnDisp = gdnaPerRxn >= 1000
+        ? (Math.round(gdnaPerRxn / 100) / 10) + ' \u00B5g'
+        : Math.round(gdnaPerRxn) + ' ng';
+      document.getElementById('b-gdna').value = perRxnDisp;
       gdnaLine.textContent = sci(Math.round(sortedCells)) + ' cells × ' +
         genomePg + ' pg = ' + gdnaDisp + ' gDNA → ' +
-        rxnsNeeded.toLocaleString() + ' PCR rxn' + (rxnsNeeded === 1 ? '' : 's') + ' @ 100 ng each';
+        rxnsNeeded.toLocaleString() + ' rxn' + (rxnsNeeded === 1 ? '' : 's') + ' @ ' + perRxnDisp + ' each';
       if (rxnsNeeded > 384) {
         rxnWarn.className = 'ck-bad';
         rxnWarn.textContent = '>' + Math.ceil(rxnsNeeded/96) + ' plates — consider higher input or pooling gDNA';
@@ -1331,7 +1342,28 @@ input[type="range"]::-moz-range-thumb {
   });
   document.getElementById('ck-amp').addEventListener('input', recalc);
   document.getElementById('r-rpv').addEventListener('input', recalc);
-  document.getElementById('ck-gdna-per-rxn').addEventListener('input', recalc);
+  document.getElementById('r-gdna').addEventListener('input', recalc);
+
+  (function() {
+    var badge = document.getElementById('b-gdna'), slider = document.getElementById('r-gdna');
+    badge.addEventListener('focus', function() {
+      badge.value = slider.value;
+      setTimeout(function(){ badge.select(); }, 0);
+    });
+    badge.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter')  badge.blur();
+      if (e.key === 'Escape') { recalc(); badge.blur(); }
+    });
+    badge.addEventListener('blur', function() {
+      var raw = badge.value.trim().toLowerCase().replace(/,/g,'');
+      var v = parseFloat(raw);
+      if (!isNaN(v)) {
+        if (/[\u00B5u]g/.test(raw)) v = v * 1000;   /* µg -> ng */
+        slider.value = Math.max(50, Math.min(1500, v));
+      }
+      recalc();
+    });
+  })();
 
   (function() {
     var badge = document.getElementById('b-rpv'), slider = document.getElementById('r-rpv');
