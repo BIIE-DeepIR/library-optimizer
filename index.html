@@ -66,6 +66,7 @@
   --border:       rgba(60,60,67,0.14);
   --border-faint: rgba(60,60,67,0.07);
   --r: 16px;
+  --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%23007aff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5'/%3E%3C/svg%3E");
 }
 
 @media (prefers-color-scheme: dark) {
@@ -80,6 +81,7 @@
     --accent-ring: rgba(10,132,255,0.45);
     --border:       rgba(255,255,255,0.11);
     --border-faint: rgba(255,255,255,0.05);
+    --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%230a84ff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5'/%3E%3C/svg%3E");
   }
 }
 
@@ -245,6 +247,17 @@ h1 {
   appearance: none;
   cursor: pointer;
   grid-column: 2 / 4;
+  padding-right: 30px;
+  background-image: var(--chev);
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 11px 7px;
+  transition: background-color .12s ease, border-color .12s ease;
+}
+.ck-select:hover { background-color: var(--accent-ring); }
+.ck-select:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
 }
 .ck-grid { display: flex; flex-direction: column; }
 .ckpoint {
@@ -318,10 +331,28 @@ input.ck-badge:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--
   background: var(--accent-bg);
   border: 1px solid var(--accent-ring);
   border-radius: 6px;
-  padding: 3px 8px;
+  padding: 3px 24px 3px 8px;
   outline: none;
   cursor: pointer;
   -webkit-appearance: none;
+  appearance: none;
+  font-weight: 500;
+  background-image: var(--chev);
+  background-repeat: no-repeat;
+  background-position: right 7px center;
+  background-size: 10px 6px;
+  transition: background-color .12s ease, border-color .12s ease;
+}
+.ck-inline select:hover { background-color: var(--accent-ring); }
+.ck-inline select:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+/* Native dropdown list should use normal system colours, not the badge tint */
+.ck-select option, .ck-inline select option {
+  background: var(--panel);
+  color: var(--text);
+  font-weight: 400;
 }
 .ck-inline input[type="number"] {
   font-family: 'SF Mono', 'Menlo', monospace;
