@@ -700,6 +700,16 @@ input[type="range"]::-moz-range-thumb {
         <div class="ck-body">
           <span class="ck-name">PCR amplification</span>
           <span class="ck-detail" id="ck-pcr-detail">Template copies per variant for library PCR</span>
+          <div class="ck-inline" style="margin-top:6px">
+            <span class="ck-inline-label">Genome size</span>
+            <select id="ck-genome">
+              <option value="6.4">Human / mammalian diploid &mdash; 6.4 pg</option>
+              <option value="0.013">Yeast haploid (S. cerevisiae) &mdash; 0.013 pg</option>
+              <option value="0.026">Yeast diploid (S. cerevisiae) &mdash; 0.026 pg</option>
+            </select>
+          </div>
+          <div class="ck-detail" id="ck-gdna-line" style="margin-top:5px">&mdash;</div>
+          <div id="ck-rxn-warn" class="ck-unit" style="margin-top:2px"></div>
         </div>
         <div class="ck-result">
           <span class="ck-val" id="ck-pcr-copies">&mdash;</span>
@@ -1067,8 +1077,33 @@ input[type="range"]::-moz-range-thumb {
           so hit rate selects which variants are sorted, not how many copies each has.
           FACS mechanical recovery (recFrac) is the only per-copy loss. */
     var copiesPerVariant = targetCov * recFrac;
-    var GENOME_PG = ct.isYeast ? 0.013 : 6;
-    var dnaInputNg = sortedCells * GENOME_PG / 1000;
+    var genomePg   = parseFloat(document.getElementById('ck-genome').value) || 6.4;
+    var totalGdnaNg = sortedCells * genomePg / 1000;
+    /* Display gDNA calculation */
+    var gdnaLine = document.getElementById('ck-gdna-line');
+    var rxnWarn  = document.getElementById('ck-rxn-warn');
+    if (sortedCells > 0 && isFinite(totalGdnaNg)) {
+      var gdnaDisp = totalGdnaNg >= 1000
+        ? (Math.round(totalGdnaNg / 100) / 10).toFixed(1) + ' µg'
+        : Math.round(totalGdnaNg) + ' ng';
+      var rxnsNeeded = Math.ceil(totalGdnaNg / 100); /* 100 ng/rxn standard */
+      gdnaLine.textContent = sci(Math.round(sortedCells)) + ' cells × ' +
+        genomePg + ' pg = ' + gdnaDisp + ' gDNA → ' +
+        rxnsNeeded.toLocaleString() + ' PCR rxn' + (rxnsNeeded === 1 ? '' : 's') + ' @ 100 ng each';
+      if (rxnsNeeded > 384) {
+        rxnWarn.className = 'ck-bad';
+        rxnWarn.textContent = '>' + Math.ceil(rxnsNeeded/96) + ' plates — consider higher input or pooling gDNA';
+      } else if (rxnsNeeded > 96) {
+        rxnWarn.className = 'ck-warn';
+        rxnWarn.textContent = Math.ceil(rxnsNeeded/96) + ' plates needed (≈1 plate = 96 rxns)';
+      } else {
+        rxnWarn.className = 'ck-unit';
+        rxnWarn.textContent = rxnsNeeded <= 96 && rxnsNeeded > 0
+          ? 'Fits on 1 plate (≤ 96 rxns)'  : '';
+      }
+    } else {
+      gdnaLine.textContent = '—'; rxnWarn.textContent = '';
+    }
     document.getElementById('ck-pcr-copies').textContent =
       copiesPerVariant >= 10
         ? Math.round(copiesPerVariant).toLocaleString()
@@ -1291,7 +1326,7 @@ input[type="range"]::-moz-range-thumb {
   ['r-tcov','r-hit','r-rec'].forEach(function(id) {
     document.getElementById(id).addEventListener('input', recalc);
   });
-  ['ck-celltype','ck-seq','ck-vial-fmt'].forEach(function(id) {
+  ['ck-celltype','ck-seq','ck-vial-fmt','ck-genome'].forEach(function(id) {
     document.getElementById(id).addEventListener('change', recalc);
   });
   document.getElementById('ck-amp').addEventListener('input', recalc);
